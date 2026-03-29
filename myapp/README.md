@@ -14,6 +14,17 @@ mvn spring-boot:run
 ```
 App runs on `http://localhost:4040`.
 
+## Environment
+
+- `APP_JWT_SECRET`: JWT signing secret
+- `APP_CORS_ALLOWED_ORIGIN_PATTERNS`: comma-separated allowed frontend origin patterns
+
+Example:
+
+```bash
+APP_CORS_ALLOWED_ORIGIN_PATTERNS=http://localhost:*,http://127.0.0.1:*,https://vanshikab62.vercel.app,https://*.vercel.app
+```
+
 ## Default Seed User
 - Email: `admin@inventory.local`
 - Password: `admin123`

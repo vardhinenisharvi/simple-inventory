@@ -1,4 +1,4 @@
-const API_BASE = import.meta.env.VITE_API_BASE || "http://localhost:4040";
+const API_BASE = (import.meta.env.VITE_API_BASE || "").replace(/\/$/, "");
 
 export class ApiError extends Error {
   constructor(message, status) {
@@ -9,6 +9,7 @@ export class ApiError extends Error {
 }
 
 export async function apiRequest(path, { method = "GET", token, body } = {}) {
+  const normalizedPath = path.startsWith("/") ? path : `/${path}`;
   const headers = {
     "Content-Type": "application/json",
   };
@@ -17,11 +18,19 @@ export async function apiRequest(path, { method = "GET", token, body } = {}) {
     headers.Authorization = `Bearer ${token}`;
   }
 
-  const response = await fetch(`${API_BASE}${path}`, {
-    method,
-    headers,
-    body: body ? JSON.stringify(body) : undefined,
-  });
+  let response;
+  try {
+    response = await fetch(`${API_BASE}${normalizedPath}`, {
+      method,
+      headers,
+      body: body ? JSON.stringify(body) : undefined,
+    });
+  } catch (error) {
+    throw new ApiError(
+      "Unable to reach the API. If you are running locally, start Spring Boot on http://localhost:4040. If this is the deployed site, make sure VITE_API_BASE points to a live backend.",
+      0,
+    );
+  }
 
   let payload = null;
   const text = await response.text();
@@ -34,7 +43,11 @@ export async function apiRequest(path, { method = "GET", token, body } = {}) {
   }
 
   if (!response.ok) {
-    const message = payload?.message || payload?.error || `Request failed (${response.status})`;
+    let message = payload?.message || payload?.error || `Request failed (${response.status})`;
+    if (!payload && response.status === 500) {
+      message =
+        "Request failed (500). If the API is not running, start Spring Boot on http://localhost:4040 and try again.";
+    }
     throw new ApiError(message, response.status);
   }
 

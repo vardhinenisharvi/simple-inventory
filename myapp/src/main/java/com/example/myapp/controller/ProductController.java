@@ -2,6 +2,7 @@ package com.example.myapp.controller;
 
 import java.util.List;
 
+import org.springframework.lang.NonNull;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -42,7 +43,7 @@ public class ProductController {
     }
 
     @GetMapping("/{id}")
-    public Product getById(@PathVariable Long id) {
+    public Product getById(@PathVariable @NonNull Long id) {
         return productService.getById(id);
     }
 
@@ -52,12 +53,12 @@ public class ProductController {
     }
 
     @PutMapping("/{id}")
-    public Product update(@PathVariable Long id, @Valid @RequestBody ProductRequest request) {
+    public Product update(@PathVariable @NonNull Long id, @Valid @RequestBody ProductRequest request) {
         return productService.update(id, request);
     }
 
     @DeleteMapping("/{id}")
-    public void delete(@PathVariable Long id) {
+    public void delete(@PathVariable @NonNull Long id) {
         productService.delete(id);
     }
 }

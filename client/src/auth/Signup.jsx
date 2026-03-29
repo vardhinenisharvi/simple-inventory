@@ -15,7 +15,7 @@ async  function submitHandler() {
     };
     console.log(" object : " + JSON.stringify(objData,null,2));
     try{
-      let res= await  fetch("http://localhost:4040/api/signup",
+      let res= await  fetch("http://localhost:4040/api/auth/signup",
         {
         method:"POST",
         headers:{

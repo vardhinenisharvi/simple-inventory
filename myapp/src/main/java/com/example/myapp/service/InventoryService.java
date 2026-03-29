@@ -1,5 +1,8 @@
 package com.example.myapp.service;
 
+import java.util.Objects;
+
+import org.springframework.lang.NonNull;
 import org.springframework.stereotype.Service;
 
 import com.example.myapp.dto.inventory.StockMovementRequest;
@@ -20,7 +23,8 @@ public class InventoryService {
     private final StockMovementRepository stockMovementRepository;
 
     public Product stockIn(StockMovementRequest request) {
-        Product product = getProduct(request.getProductId());
+        Long productId = Objects.requireNonNull(request.getProductId(), "productId must not be null");
+        Product product = getProduct(productId);
         product.setQuantity(product.getQuantity() + request.getQuantity());
 
         StockMovement movement = new StockMovement();
@@ -34,7 +38,8 @@ public class InventoryService {
     }
 
     public Product stockOut(StockMovementRequest request) {
-        Product product = getProduct(request.getProductId());
+        Long productId = Objects.requireNonNull(request.getProductId(), "productId must not be null");
+        Product product = getProduct(productId);
         if (product.getQuantity() < request.getQuantity()) {
             throw new IllegalArgumentException("Insufficient stock");
         }
@@ -51,7 +56,7 @@ public class InventoryService {
         return productRepository.save(product);
     }
 
-    private Product getProduct(Long id) {
+    private Product getProduct(@NonNull Long id) {
         return productRepository.findById(id)
                 .orElseThrow(() -> new NotFoundException("Product not found: " + id));
     }

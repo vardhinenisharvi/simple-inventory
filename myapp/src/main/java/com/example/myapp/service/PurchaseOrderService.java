@@ -1,7 +1,9 @@
 package com.example.myapp.service;
 
 import java.util.List;
+import java.util.Objects;
 
+import org.springframework.lang.NonNull;
 import org.springframework.stereotype.Service;
 
 import com.example.myapp.dto.order.PurchaseOrderRequest;
@@ -29,10 +31,12 @@ public class PurchaseOrderService {
     }
 
     public PurchaseOrder create(PurchaseOrderRequest request) {
-        Product product = productRepository.findById(request.getProductId())
+        Long productId = Objects.requireNonNull(request.getProductId(), "productId must not be null");
+        Product product = productRepository.findById(productId)
                 .orElseThrow(() -> new NotFoundException("Product not found: " + request.getProductId()));
 
-        Supplier supplier = supplierRepository.findById(request.getSupplierId())
+        Long supplierId = Objects.requireNonNull(request.getSupplierId(), "supplierId must not be null");
+        Supplier supplier = supplierRepository.findById(supplierId)
                 .orElseThrow(() -> new NotFoundException("Supplier not found: " + request.getSupplierId()));
 
         PurchaseOrder order = new PurchaseOrder();
@@ -43,7 +47,7 @@ public class PurchaseOrderService {
         return purchaseOrderRepository.save(order);
     }
 
-    public PurchaseOrder updateStatus(Long id, PurchaseOrderStatus status) {
+    public PurchaseOrder updateStatus(@NonNull Long id, PurchaseOrderStatus status) {
         PurchaseOrder order = purchaseOrderRepository.findById(id)
                 .orElseThrow(() -> new NotFoundException("Purchase order not found: " + id));
         order.setStatus(status);

@@ -2,6 +2,7 @@ package com.example.myapp.controller;
 
 import java.util.List;
 
+import org.springframework.lang.NonNull;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -37,7 +38,7 @@ public class PurchaseOrderController {
     }
 
     @PatchMapping("/{id}/status")
-    public PurchaseOrder updateStatus(@PathVariable Long id, @RequestParam PurchaseOrderStatus status) {
+    public PurchaseOrder updateStatus(@PathVariable @NonNull Long id, @RequestParam PurchaseOrderStatus status) {
         return purchaseOrderService.updateStatus(id, status);
     }
 }

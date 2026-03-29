@@ -35,6 +35,19 @@ const emptySupplier = {
   phone: "",
 };
 
+function PageIntro({ eyebrow, title, description, aside }) {
+  return (
+    <div className="page-intro">
+      <div>
+        <p className="eyebrow">{eyebrow}</p>
+        <h3>{title}</h3>
+        <p className="panel-copy">{description}</p>
+      </div>
+      {aside ? <div className="page-intro-aside">{aside}</div> : null}
+    </div>
+  );
+}
+
 function ProtectedRoute({ token }) {
   if (!token) {
     return <Navigate to="/login" replace />;
@@ -42,18 +55,35 @@ function ProtectedRoute({ token }) {
   return <Outlet />;
 }
 
-function AuthPage({ mode, onSubmit }) {
-  const [form, setForm] = useState({ name: "", email: "", password: "" });
+function AuthPage({ mode, onSubmit, notice }) {
+  const [form, setForm] = useState({ name: "", email: "", password: "", confirmPassword: "" });
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState("");
   const navigate = useNavigate();
 
   async function submit(event) {
     event.preventDefault();
+    const normalizedForm = {
+      ...form,
+      name: form.name.trim(),
+      email: form.email.trim(),
+    };
+
+    if (mode === "signup") {
+      if (normalizedForm.password.length < 6) {
+        setMessage("Password must be at least 6 characters.");
+        return;
+      }
+      if (normalizedForm.password !== normalizedForm.confirmPassword) {
+        setMessage("Confirm password must match password.");
+        return;
+      }
+    }
+
     setBusy(true);
     setMessage("");
     try {
-      await onSubmit(mode, form);
+      await onSubmit(mode, normalizedForm);
       navigate("/dashboard", { replace: true });
     } catch (error) {
       setMessage(error.message);
@@ -64,50 +94,96 @@ function AuthPage({ mode, onSubmit }) {
 
   return (
     <div className="auth-shell">
-      <section className="auth-card">
-        <h1>Simple Inventory Manager</h1>
-        <p className="sub">Spring Boot API connected frontend</p>
-        <form onSubmit={submit} className="grid two">
-          {mode === "signup" ? (
+      <div className="auth-layout">
+        <section className="auth-showcase">
+          <p className="eyebrow">Inventory OS</p>
+          <h1>StockPilot Console</h1>
+          <p className="sub">
+            Run purchasing, stock movement, and supplier operations from one clean command center.
+          </p>
+          <div className="feature-list">
+            <div className="feature-item">
+              <span className="feature-dot" aria-hidden="true" />
+              <div>
+                <h4>Live Inventory Health</h4>
+                <p>Track low stock and total value before shortages impact sales.</p>
+              </div>
+            </div>
+            <div className="feature-item">
+              <span className="feature-dot" aria-hidden="true" />
+              <div>
+                <h4>Supplier Control</h4>
+                <p>Keep your vendor network organized with direct product mapping.</p>
+              </div>
+            </div>
+            <div className="feature-item">
+              <span className="feature-dot" aria-hidden="true" />
+              <div>
+                <h4>Order Workflow</h4>
+                <p>Approve, receive, and close purchase orders in a single flow.</p>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section className="auth-card">
+          <p className="eyebrow">{mode === "login" ? "Welcome back" : "Create workspace access"}</p>
+          <h2>{mode === "login" ? "Sign in to continue" : "Create your account"}</h2>
+          <p className="sub">Spring Boot API connected frontend</p>
+          <form onSubmit={submit} className="grid two">
+            {mode === "signup" ? (
+              <label>
+                Name
+                <input
+                  value={form.name}
+                  onChange={(e) => setForm((prev) => ({ ...prev, name: e.target.value }))}
+                  required
+                />
+              </label>
+            ) : null}
             <label>
-              Name
+              Email
               <input
-                value={form.name}
-                onChange={(e) => setForm((prev) => ({ ...prev, name: e.target.value }))}
+                type="email"
+                value={form.email}
+                onChange={(e) => setForm((prev) => ({ ...prev, email: e.target.value }))}
                 required
               />
             </label>
-          ) : null}
-          <label>
-            Email
-            <input
-              type="email"
-              value={form.email}
-              onChange={(e) => setForm((prev) => ({ ...prev, email: e.target.value }))}
-              required
-            />
-          </label>
-          <label>
-            Password
-            <input
-              type="password"
-              value={form.password}
-              onChange={(e) => setForm((prev) => ({ ...prev, password: e.target.value }))}
-              required
-            />
-          </label>
-          <button className="btn primary" disabled={busy}>
-            {busy ? "Please wait" : mode}
-          </button>
-        </form>
-        <div className="row">
-          <NavLink className="btn ghost" to={mode === "login" ? "/signup" : "/login"}>
-            Switch to {mode === "login" ? "signup" : "login"}
-          </NavLink>
-          <span className="hint">Default admin: admin@inventory.local / admin123</span>
-        </div>
-        {message ? <p className="note">{message}</p> : null}
-      </section>
+            <label>
+              Password
+              <input
+                type="password"
+                value={form.password}
+                onChange={(e) => setForm((prev) => ({ ...prev, password: e.target.value }))}
+                required
+              />
+            </label>
+            {mode === "signup" ? (
+              <label>
+                Confirm Password
+                <input
+                  type="password"
+                  value={form.confirmPassword}
+                  onChange={(e) => setForm((prev) => ({ ...prev, confirmPassword: e.target.value }))}
+                  required
+                />
+              </label>
+            ) : null}
+            <button className="btn primary" disabled={busy}>
+              {busy ? "Please wait" : mode === "login" ? "Login" : "Signup"}
+            </button>
+          </form>
+          <div className="row">
+            <NavLink className="btn ghost" to={mode === "login" ? "/signup" : "/login"}>
+              Switch to {mode === "login" ? "signup" : "login"}
+            </NavLink>
+            <span className="hint">Default admin: admin@inventory.local / admin123</span>
+          </div>
+          {message ? <p className="note">{message}</p> : null}
+          {!message && notice ? <p className="note">{notice}</p> : null}
+        </section>
+      </div>
     </div>
   );
 }
@@ -116,19 +192,31 @@ function Layout({ user, onRefresh, onLogout, message }) {
   return (
     <div className="app-shell">
       <header className="topbar">
-        <div>
-          <h2>Inventory Console</h2>
-          <p>
-            {user.name} ({user.role})
-          </p>
+        <div className="brand-block">
+          <div className="orb-stack" aria-hidden="true">
+            <span className="orb orb-a" />
+            <span className="orb orb-b" />
+          </div>
+          <div>
+            <h2>Inventory Console</h2>
+            <p>
+              {user.name} ({user.role})
+            </p>
+          </div>
         </div>
-        <div className="row">
-          <button className="btn" onClick={onRefresh}>
-            Refresh
-          </button>
-          <button className="btn ghost" onClick={onLogout}>
-            Logout
-          </button>
+        <div className="topbar-tools">
+          <div className="status-pills">
+            <span className="pill">Operations hub</span>
+            <span className="pill soft">{user.role || "Member"} access</span>
+          </div>
+          <div className="row">
+            <button className="btn" onClick={onRefresh}>
+              Refresh
+            </button>
+            <button className="btn ghost" onClick={onLogout}>
+              Logout
+            </button>
+          </div>
         </div>
       </header>
 
@@ -163,26 +251,51 @@ function DashboardPage({ dashboard, onLoadLowStock }) {
   }
 
   return (
-    <section className="cards">
-      <article className="card accent-a">
-        <h3>Total Products</h3>
-        <p>{dashboard.totalProducts}</p>
-      </article>
-      <article className="card accent-b">
-        <h3>Total Suppliers</h3>
-        <p>{dashboard.totalSuppliers}</p>
-      </article>
-      <article className="card accent-c">
-        <h3>Low Stock Items</h3>
-        <p>{dashboard.lowStockProducts}</p>
-      </article>
-      <article className="card accent-d">
-        <h3>Inventory Value</h3>
-        <p>Rs {dashboard.inventoryValue}</p>
-      </article>
-      <button className="btn" onClick={handleLowStock}>
-        Show Low Stock Products
-      </button>
+    <section className="dashboard-stack">
+      <PageIntro
+        eyebrow="Overview"
+        title="A softer command center for your inventory"
+        description="Track what is in stock, what needs attention, and how your catalog is growing at a glance."
+        aside={<span className="pill highlight">Live summary</span>}
+      />
+      <section className="cards">
+        <article className="card accent-a">
+          <span className="card-tag">Catalog</span>
+          <h3>Total Products</h3>
+          <p>{dashboard.totalProducts}</p>
+          <span className="card-note">Items currently listed in your system</span>
+        </article>
+        <article className="card accent-b">
+          <span className="card-tag">Partners</span>
+          <h3>Total Suppliers</h3>
+          <p>{dashboard.totalSuppliers}</p>
+          <span className="card-note">Active supplier relationships</span>
+        </article>
+        <article className="card accent-c">
+          <span className="card-tag">Attention</span>
+          <h3>Low Stock Items</h3>
+          <p>{dashboard.lowStockProducts}</p>
+          <span className="card-note">Products close to replenishment</span>
+        </article>
+        <article className="card accent-d">
+          <span className="card-tag">Value</span>
+          <h3>Inventory Value</h3>
+          <p>Rs {dashboard.inventoryValue}</p>
+          <span className="card-note">Estimated stock value snapshot</span>
+        </article>
+      </section>
+      <section className="panel dashboard-spotlight">
+        <div>
+          <p className="eyebrow">Quick action</p>
+          <h3>Need a fast restock check?</h3>
+          <p className="panel-copy">
+            Jump straight to products that are below their threshold and decide what needs to be purchased next.
+          </p>
+        </div>
+        <button className="btn primary" onClick={handleLowStock}>
+          Show Low Stock Products
+        </button>
+      </section>
     </section>
   );
 }
@@ -203,7 +316,11 @@ function ProductsPage({
 }) {
   return (
     <section className="panel">
-      <h3>Product Management</h3>
+      <PageIntro
+        eyebrow="Products"
+        title="Product management"
+        description="Search, create, and refine your catalog with supplier links and stock thresholds."
+      />
       <form className="row" onSubmit={onSearchProducts}>
         <input
           placeholder="Search by product name"
@@ -327,7 +444,11 @@ function ProductsPage({
 function SuppliersPage({ suppliers, supplierForm, setSupplierForm, editSupplierId, setEditSupplierId, saveSupplier, deleteSupplier }) {
   return (
     <section className="panel">
-      <h3>Supplier Management</h3>
+      <PageIntro
+        eyebrow="Suppliers"
+        title="Supplier management"
+        description="Keep your vendor list clean and easy to maintain so restocking stays frictionless."
+      />
       <form className="grid three" onSubmit={saveSupplier}>
         <input
           placeholder="Supplier Name"
@@ -394,7 +515,12 @@ function SuppliersPage({ suppliers, supplierForm, setSupplierForm, editSupplierI
 function InventoryPage({ products, stockInForm, setStockInForm, stockOutForm, setStockOutForm, runInventory }) {
   return (
     <section className="panel split">
-      <div>
+      <div className="inventory-column">
+        <PageIntro
+          eyebrow="Inventory"
+          title="Stock movements"
+          description="Log stock coming in and going out with quick, operational forms."
+        />
         <h3>Stock In</h3>
         <form
           className="grid"
@@ -432,7 +558,13 @@ function InventoryPage({ products, stockInForm, setStockInForm, stockOutForm, se
           <button className="btn primary">Apply Stock In</button>
         </form>
       </div>
-      <div>
+
+      <div className="inventory-column">
+        <PageIntro
+          eyebrow="Dispatch"
+          title="Outbound handling"
+          description="Record outgoing units with quick notes so your stock ledger stays accurate."
+        />
         <h3>Stock Out</h3>
         <form
           className="grid"
@@ -477,7 +609,11 @@ function InventoryPage({ products, stockInForm, setStockInForm, stockOutForm, se
 function OrdersPage({ products, suppliers, orderForm, setOrderForm, createOrder, orders, updateOrderStatus }) {
   return (
     <section className="panel">
-      <h3>Purchase Orders</h3>
+      <PageIntro
+        eyebrow="Orders"
+        title="Purchase orders"
+        description="Create supplier orders and move them from approval to receiving without leaving the workspace."
+      />
       <form className="grid three" onSubmit={createOrder}>
         <select
           value={orderForm.productId}
@@ -582,8 +718,37 @@ function App() {
   useEffect(() => {
     if (token) {
       loadCoreData();
+    } else {
+      resetAppData();
     }
   }, [token]);
+
+  function resetAppData() {
+    setDashboard(null);
+    setProducts([]);
+    setSuppliers([]);
+    setOrders([]);
+  }
+
+  function clearAuth(nextMessage = "") {
+    localStorage.removeItem("inventory_token");
+    localStorage.removeItem("inventory_name");
+    localStorage.removeItem("inventory_email");
+    localStorage.removeItem("inventory_role");
+    setToken("");
+    setUser({ name: "", email: "", role: "" });
+    resetAppData();
+    setMessage(nextMessage);
+  }
+
+  function handleApiError(error, fallbackMessage = "Request failed.") {
+    if (error?.status === 401 || error?.status === 403) {
+      clearAuth("Your session expired or is no longer authorized. Please sign in again.");
+      return;
+    }
+
+    setMessage(error?.message || fallbackMessage);
+  }
 
   async function loadCoreData() {
     try {
@@ -598,7 +763,7 @@ function App() {
       setSuppliers(suppliersData || []);
       setOrders(ordersData || []);
     } catch (error) {
-      setMessage(error.message);
+      handleApiError(error, "Unable to load data.");
     }
   }
 
@@ -619,16 +784,11 @@ function App() {
         : { name: form.name, email: form.email, password: form.password };
     const payload = await apiRequest(path, { method: "POST", body });
     persistAuth(payload);
+    setMessage("");
   }
 
   function logout() {
-    localStorage.removeItem("inventory_token");
-    localStorage.removeItem("inventory_name");
-    localStorage.removeItem("inventory_email");
-    localStorage.removeItem("inventory_role");
-    setToken("");
-    setUser({ name: "", email: "", role: "" });
-    setMessage("");
+    clearAuth("");
   }
 
   async function reloadProducts(q = "") {
@@ -642,13 +802,17 @@ function App() {
     try {
       await reloadProducts(search.trim());
     } catch (error) {
-      setMessage(error.message);
+      handleApiError(error);
     }
   }
 
   async function onLoadLowStock() {
-    const items = await apiRequest("/api/products/low-stock", { token });
-    setProducts(items || []);
+    try {
+      const items = await apiRequest("/api/products/low-stock", { token });
+      setProducts(items || []);
+    } catch (error) {
+      handleApiError(error);
+    }
   }
 
   async function saveProduct(event) {
@@ -673,7 +837,7 @@ function App() {
       setDashboard(await apiRequest("/api/dashboard/summary", { token }));
       setMessage("Product saved.");
     } catch (error) {
-      setMessage(error.message);
+      handleApiError(error);
     }
   }
 
@@ -684,7 +848,7 @@ function App() {
       setDashboard(await apiRequest("/api/dashboard/summary", { token }));
       setMessage("Product deleted.");
     } catch (error) {
-      setMessage(error.message);
+      handleApiError(error);
     }
   }
 
@@ -702,7 +866,7 @@ function App() {
       setDashboard(await apiRequest("/api/dashboard/summary", { token }));
       setMessage("Supplier saved.");
     } catch (error) {
-      setMessage(error.message);
+      handleApiError(error);
     }
   }
 
@@ -713,7 +877,7 @@ function App() {
       setDashboard(await apiRequest("/api/dashboard/summary", { token }));
       setMessage("Supplier deleted.");
     } catch (error) {
-      setMessage(error.message);
+      handleApiError(error);
     }
   }
 
@@ -733,7 +897,7 @@ function App() {
       resetFn();
       setMessage("Inventory updated.");
     } catch (error) {
-      setMessage(error.message);
+      handleApiError(error);
     }
   }
 
@@ -753,7 +917,7 @@ function App() {
       setOrderForm({ productId: "", supplierId: "", quantity: 1 });
       setMessage("Order created.");
     } catch (error) {
-      setMessage(error.message);
+      handleApiError(error);
     }
   }
 
@@ -763,15 +927,15 @@ function App() {
       setOrders(await apiRequest("/api/orders", { token }));
       setMessage("Order status updated.");
     } catch (error) {
-      setMessage(error.message);
+      handleApiError(error);
     }
   }
 
   return (
     <BrowserRouter>
       <Routes>
-        <Route path="/login" element={<AuthPage mode="login" onSubmit={authenticate} />} />
-        <Route path="/signup" element={<AuthPage mode="signup" onSubmit={authenticate} />} />
+        <Route path="/login" element={<AuthPage mode="login" onSubmit={authenticate} notice={message} />} />
+        <Route path="/signup" element={<AuthPage mode="signup" onSubmit={authenticate} notice={message} />} />
 
         <Route element={<ProtectedRoute token={token} />}>
           <Route element={<Layout user={user} onRefresh={loadCoreData} onLogout={logout} message={message} />}>

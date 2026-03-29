@@ -1,7 +1,9 @@
 package com.example.myapp.service;
 
 import java.util.List;
+import java.util.Objects;
 
+import org.springframework.lang.NonNull;
 import org.springframework.stereotype.Service;
 
 import com.example.myapp.dto.supplier.SupplierRequest;
@@ -21,7 +23,7 @@ public class SupplierService {
         return supplierRepository.findAll();
     }
 
-    public Supplier getById(Long id) {
+    public Supplier getById(@NonNull Long id) {
         return supplierRepository.findById(id)
                 .orElseThrow(() -> new NotFoundException("Supplier not found: " + id));
     }
@@ -32,13 +34,13 @@ public class SupplierService {
         return supplierRepository.save(supplier);
     }
 
-    public Supplier update(Long id, SupplierRequest request) {
+    public Supplier update(@NonNull Long id, SupplierRequest request) {
         Supplier supplier = getById(id);
         map(request, supplier);
-        return supplierRepository.save(supplier);
+        return supplierRepository.save(Objects.requireNonNull(supplier, "supplier must not be null"));
     }
 
-    public void delete(Long id) {
+    public void delete(@NonNull Long id) {
         if (!supplierRepository.existsById(id)) {
             throw new NotFoundException("Supplier not found: " + id);
         }

@@ -1,7 +1,9 @@
 package com.example.myapp.service;
 
 import java.util.List;
+import java.util.Objects;
 
+import org.springframework.lang.NonNull;
 import org.springframework.stereotype.Service;
 
 import com.example.myapp.dto.product.ProductRequest;
@@ -24,7 +26,7 @@ public class ProductService {
         return productRepository.findAll();
     }
 
-    public Product getById(Long id) {
+    public Product getById(@NonNull Long id) {
         return productRepository.findById(id)
                 .orElseThrow(() -> new NotFoundException("Product not found: " + id));
     }
@@ -48,7 +50,7 @@ public class ProductService {
         return productRepository.save(product);
     }
 
-    public Product update(Long id, ProductRequest request) {
+    public Product update(@NonNull Long id, ProductRequest request) {
         Product product = getById(id);
         if (!product.getSku().equals(request.getSku()) && productRepository.existsBySku(request.getSku())) {
             throw new IllegalArgumentException("SKU already exists");
@@ -57,7 +59,7 @@ public class ProductService {
         return productRepository.save(product);
     }
 
-    public void delete(Long id) {
+    public void delete(@NonNull Long id) {
         if (!productRepository.existsById(id)) {
             throw new NotFoundException("Product not found: " + id);
         }
@@ -73,7 +75,8 @@ public class ProductService {
         product.setLowStockThreshold(request.getLowStockThreshold());
 
         if (request.getSupplierId() != null) {
-            Supplier supplier = supplierRepository.findById(request.getSupplierId())
+            Long supplierId = Objects.requireNonNull(request.getSupplierId(), "supplierId must not be null");
+            Supplier supplier = supplierRepository.findById(supplierId)
                     .orElseThrow(() -> new NotFoundException("Supplier not found: " + request.getSupplierId()));
             product.setSupplier(supplier);
         } else {

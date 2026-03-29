@@ -7,7 +7,7 @@ function Login() {
     password: "",
   });
 
-  const api = "http://localhost:4040/api/login";
+  const api = "http://localhost:4040/api/auth/login";
   const navigate = useNavigate();
 
   async function submitHandler() {

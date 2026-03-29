@@ -1,0 +1,32 @@
+services:
+  backend:
+    build:
+      context: ./myapp
+    container_name: inventory-backend
+    environment:
+      SERVER_PORT: 4040
+      SPRING_DATASOURCE_URL: jdbc:h2:file:/app/data/inventorydb;AUTO_SERVER=TRUE
+      SPRING_DATASOURCE_USERNAME: sa
+      SPRING_DATASOURCE_PASSWORD: ""
+      SPRING_JPA_HIBERNATE_DDL_AUTO: update
+      SPRING_H2_CONSOLE_ENABLED: "true"
+      APP_JWT_SECRET: ${APP_JWT_SECRET:-change-this-secret-key-change-this-secret-key}
+      APP_JWT_EXPIRATION_MS: 3600000
+    volumes:
+      - backend-data:/app/data
+    expose:
+      - "4040"
+    ports:
+      - "4040:4040"
+
+  frontend:
+    build:
+      context: ./client
+    container_name: inventory-frontend
+    depends_on:
+      - backend
+    ports:
+      - "8080:80"
+
+volumes:
+  backend-data:
