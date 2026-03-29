@@ -1,4 +1,6 @@
-const API_BASE = (import.meta.env.VITE_API_BASE || "").replace(/\/$/, "");
+const ENV_API_BASE = (import.meta.env.VITE_API_BASE || "").replace(/\/$/, "");
+const API_BASE =
+  ENV_API_BASE || (import.meta.env.DEV ? "" : typeof window !== "undefined" ? window.location.origin : "");
 
 export class ApiError extends Error {
   constructor(message, status) {
@@ -10,6 +12,12 @@ export class ApiError extends Error {
 
 export async function apiRequest(path, { method = "GET", token, body } = {}) {
   const normalizedPath = path.startsWith("/") ? path : `/${path}`;
+  if (!API_BASE && !import.meta.env.DEV) {
+    throw new ApiError(
+      "Production API is not configured. Set VITE_API_BASE or provide a same-origin /api proxy for this deployment.",
+      0,
+    );
+  }
   const headers = {
     "Content-Type": "application/json",
   };
@@ -27,7 +35,7 @@ export async function apiRequest(path, { method = "GET", token, body } = {}) {
     });
   } catch (error) {
     throw new ApiError(
-      "Unable to reach the API. If you are running locally, start Spring Boot on http://localhost:4040. If this is the deployed site, make sure VITE_API_BASE points to a live backend.",
+      "Unable to reach the API. If you are running locally, start Spring Boot on http://localhost:4040. If this is the deployed site, make sure VITE_API_BASE points to a live backend or that the /api proxy is configured.",
       0,
     );
   }
